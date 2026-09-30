@@ -3,7 +3,9 @@ import {
   Product,
   ProductVersion,
   UserProduct,
+  Organization,
 } from "../models/index.js";
+import "dotenv/config";
 
 /*
 |--------------------------------------------------------------------------
@@ -121,6 +123,13 @@ export const selectProducts = async (req, res) => {
         isActive: true,
         isDeleted: false,
       },
+      include: [
+        {
+          model: Organization,
+          as: "organization",
+          attributes: ["id", "name", "slug"],
+        },
+      ],
     });
 
     if (!user) {
@@ -217,6 +226,25 @@ export const selectProducts = async (req, res) => {
       });
 
       savedProducts.push(userProduct);
+    }
+
+    if (user.organization && process.env.DIR_SETUP_URL) {
+      try {
+        const setupUrl = process.env.DIR_SETUP_URL
+          .replace("{site}", encodeURIComponent(user.organization.name))
+          .replace("{pwd}", encodeURIComponent(process.env.DIR_SETUP_KEY || ""));
+
+        const setupResponse = await fetch(setupUrl, { method: "GET" });
+
+        if (!setupResponse.ok) {
+          console.error(
+            `DIR SETUP CALL FAILED: ${setupResponse.status} ${setupResponse.statusText}`
+          );
+        }
+      } catch (setupError) {
+        // Don't fail the whole request just because the setup ping failed
+        console.error("DIR SETUP CALL ERROR:", setupError);
+      }
     }
 
     return res.status(201).json({
