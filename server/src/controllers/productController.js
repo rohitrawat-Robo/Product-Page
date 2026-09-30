@@ -227,11 +227,12 @@ export const selectProducts = async (req, res) => {
 
       savedProducts.push(userProduct);
     }
-
+console.log(user.organization);
+console.log(process.env.DIR_SETUP_URL);
     if (user.organization && process.env.DIR_SETUP_URL) {
       try {
         const setupUrl = process.env.DIR_SETUP_URL
-          .replace("{site}", encodeURIComponent(user.organization.name))
+          .replace("{site}", encodeURIComponent(user.organization.slug))
           .replace("{pwd}", encodeURIComponent(process.env.DIR_SETUP_KEY || ""));
 
         const setupResponse = await fetch(setupUrl, { method: "GET" });
